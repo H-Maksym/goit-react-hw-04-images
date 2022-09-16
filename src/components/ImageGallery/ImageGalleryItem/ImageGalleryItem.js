@@ -8,7 +8,6 @@ import useToggleModal from 'hooks/toggleModal/';
 export default function ImageGalleryItem({ webformatURL, largeImageURL }) {
   const { isOpen, openModal, closeModal, handleKeyDown, handleBackdropClick } =
     useToggleModal(false);
-
   return (
     <>
       <StyledImageGalleryItem onClick={openModal}>

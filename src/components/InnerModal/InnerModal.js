@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import Box from 'components/Box';
 
-export default function InnerModal({ largeImageURL, isLoad }) {
+export default function InnerModal({ largeImageURL }) {
   return (
     <>
       <Box position="relative">

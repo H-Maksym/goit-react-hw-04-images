@@ -33,10 +33,51 @@ export default function App() {
   const [status, setStatus] = useState(Status.IDLE);
 
   useEffect(() => {
-    if (searchValue !== '') {
-      getImages();
+    if (searchValue === '') {
+      return;
     }
+
+    async function getImages() {
+      setStatus(Status.PENDING);
+
+      try {
+        const data = await fetchImage(searchValue, page);
+
+        if (page === 1) {
+          if (data.totalHits === 0) {
+            toast.info(`Nothing was found for your query - "${searchValue}"`);
+            setStatus(Status.RESOLVED);
+            return;
+          }
+          setTotalHits(data.totalHits);
+          toast.success(`${data.totalHits} pictures were found`, toastConfigs);
+        }
+
+        setImages(pS => [...pS, ...data.hits]);
+        setStatus(Status.RESOLVED);
+
+        if (data.hits.length < 12) {
+          setStatus(Status.LOADED);
+          toast.info('Everything is loaded');
+        }
+      } catch (error) {
+        setStatus(Status.REJECTED);
+        toast.error('oops :( Something wrong, try again');
+      }
+    }
+
+    getImages();
   }, [page, searchValue]);
+
+  useEffect(() => {
+    if (page > 1) {
+      const { scrollTop, clientHeight } = document.documentElement;
+      window.scrollTo({
+        top: scrollTop + clientHeight - 165,
+        behavior: 'smooth',
+      });
+    }
+  }, [page]);
 
   /** event handler filter*/
   function handleFormSubmit(e) {
@@ -54,48 +95,11 @@ export default function App() {
     e.target.reset();
   }
 
-  /** calculated value for filter*/
-  async function getImages() {
-    setStatus(Status.PENDING);
-    //const { searchValue, page } = this.state;
-    try {
-      if (images.length > totalHits) {
-        setStatus(Status.LOADED);
-        toast.info('Everything is loaded');
-        return;
-      }
-
-      const data = await fetchImage(searchValue, page);
-
-      if (page === 1) {
-        if (data.totalHits === 0) {
-          toast.info(`Nothing was found for your query - "${searchValue}"`);
-          setStatus(Status.RESOLVED);
-          return;
-        }
-        toast.success(`${data.totalHits} pictures were found`, toastConfigs);
-        setTotalHits(data.totalHits);
-      }
-
-      setImages(pS => [...pS, ...data.hits]);
-      setStatus(Status.RESOLVED);
-
-      if (data.hits.length < 12) {
-        setStatus(Status.LOADED);
-        toast.info('Everything is loaded');
-      }
-    } catch (error) {
-      setStatus(Status.REJECTED);
-      toast.error('oops :( Something wrong, try again');
-    }
-  }
-
   function loadMore() {
     setPage(pS => pS + 1);
   }
 
   /** render*/
-
   return (
     <>
       <Box py={0} as="section">
@@ -128,11 +132,11 @@ export default function App() {
           {images.length > 0 && (
             <>
               <ImageGallery images={images} />
-              <Box py="20px" display="flex" justifyContent="center">
-                {status !== Status.LOADED && (
+              {images.length <= totalHits && status !== Status.LOADED && (
+                <Box py="20px" display="flex" justifyContent="center">
                   <Button onClick={loadMore}>Load more</Button>
-                )}
-              </Box>
+                </Box>
+              )}
             </>
           )}
         </Box>
