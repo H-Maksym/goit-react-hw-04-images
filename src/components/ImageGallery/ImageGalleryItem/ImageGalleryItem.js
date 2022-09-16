@@ -1,44 +1,31 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { StyledImageGalleryItem, ImageItem } from './ImageGalleryItem.styled';
 import Modal from 'components/Modal';
 import InnerModal from 'components/InnerModal';
+import useToggleModal from 'hooks/toggleModal/';
 
-export default class ImageGalleryItem extends Component {
-  state = {
-    showModal: false,
-  };
+export default function ImageGalleryItem({ webformatURL, largeImageURL }) {
+  const { isOpen, openModal, closeModal, handleKeyDown, handleBackdropClick } =
+    useToggleModal(false);
 
-  handleIconClose = e => {
-    this.toggleModal();
-  };
+  return (
+    <>
+      <StyledImageGalleryItem onClick={openModal}>
+        <ImageItem alt="" src={webformatURL} loading="lazy" />
+      </StyledImageGalleryItem>
 
-  toggleModal = () => {
-    this.setState(({ showModal }) => ({
-      showModal: !showModal,
-    }));
-  };
-
-  render() {
-    const { webformatURL, largeImageURL } = this.props;
-    const { showModal } = this.state;
-    return (
-      <>
-        <StyledImageGalleryItem onClick={this.toggleModal}>
-          <ImageItem alt="" src={webformatURL} loading="lazy" />
-        </StyledImageGalleryItem>
-
-        {showModal && (
-          <Modal onClose={this.toggleModal}>
-            <InnerModal
-              toggleModal={this.toggleModal}
-              largeImageURL={largeImageURL}
-            />
-          </Modal>
-        )}
-      </>
-    );
-  }
+      {isOpen && (
+        <Modal
+          handleBackdropClick={handleBackdropClick}
+          handleKeyDown={handleKeyDown}
+          closeModal={closeModal}
+        >
+          <InnerModal largeImageURL={largeImageURL} />
+        </Modal>
+      )}
+    </>
+  );
 }
 
 ImageGalleryItem.propTypes = {

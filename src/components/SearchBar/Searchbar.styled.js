@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 
 export const StyledSearchBar = styled.div`
+  margin-bottom: 10px;
   top: 0;
   left: 0;
   position: sticky;

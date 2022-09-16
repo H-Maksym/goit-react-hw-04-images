@@ -6,7 +6,7 @@ const searchParams = new URLSearchParams({
   image_type: 'photo',
   orientation: 'horizontal',
   safesearch: true,
-  per_page: 180,
+  per_page: 12,
 });
 
 export default async function fetchImage(searchQuery = '', page = 1) {

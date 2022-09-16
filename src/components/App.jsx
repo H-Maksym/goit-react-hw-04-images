@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { useState, useEffect } from 'react';
 
 import { toastConfigs } from 'config/notifyConfig';
 import { ToastContainer, toast } from 'react-toastify';
@@ -25,143 +25,118 @@ const Status = {
   REJECTED: 'rejected',
 };
 
-export default class App extends Component {
-  state = {
-    searchValue: '',
-    images: [],
-    page: 1,
-    totalHits: 0,
-    status: Status.IDLE,
-  };
+export default function App() {
+  const [searchValue, setSearchValue] = useState('');
+  const [images, setImages] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalHits, setTotalHits] = useState(0);
+  const [status, setStatus] = useState(Status.IDLE);
 
-  /**set contacts from Locale Storage */
-  async componentDidUpdate(_, prevState) {
-    if (
-      this.state.page !== prevState.page ||
-      this.state.searchValue !== prevState.searchValue
-    ) {
-      await this.getImages();
+  useEffect(() => {
+    if (searchValue !== '') {
+      getImages();
     }
-  }
+  }, [page, searchValue]);
 
   /** event handler filter*/
-  handleFormSubmit = e => {
+  function handleFormSubmit(e) {
     e.preventDefault();
-    const searchValue = e.target.elements.query.value;
+    const searchValueInput = e.target.elements.query.value;
 
     //componentShouldUpdate()
-    if (
-      searchValue.trim() !== this.state.searchValue ||
-      this.state.page !== 1
-    ) {
-      this.setState({
-        searchValue,
-        page: 1,
-        images: [],
-        totalHits: 0,
-      });
+    if (searchValueInput.trim() !== searchValue || page !== 1) {
+      setSearchValue(searchValueInput);
+      setPage(1);
+      setImages([]);
+      setTotalHits(0);
     }
 
     e.target.reset();
-  };
+  }
 
   /** calculated value for filter*/
-  getImages = async () => {
-    const { searchValue, page } = this.state;
-    this.setState({ status: Status.PENDING });
+  async function getImages() {
+    setStatus(Status.PENDING);
+    //const { searchValue, page } = this.state;
     try {
-      console.log(this.state.status);
-      console.log('before', this.state.images.length);
-      console.log('before', this.state.totalHits);
-
-      if (this.state.images.length > this.state.totalHits) {
-        this.setState({ status: Status.LOADED });
+      if (images.length > totalHits) {
+        setStatus(Status.LOADED);
         toast.info('Everything is loaded');
         return;
       }
 
       const data = await fetchImage(searchValue, page);
 
-      if (this.state.page === 1) {
+      if (page === 1) {
         if (data.totalHits === 0) {
-          toast.info(
-            `Nothing was found for your query - "${this.state.searchValue}"`
-          );
-          this.setState({ status: Status.RESOLVED });
+          toast.info(`Nothing was found for your query - "${searchValue}"`);
+          setStatus(Status.RESOLVED);
           return;
         }
         toast.success(`${data.totalHits} pictures were found`, toastConfigs);
-        this.setState({ totalHits: data.totalHits });
+        setTotalHits(data.totalHits);
       }
 
-      this.setState(prevState => ({
-        images: [...prevState.images, ...data.hits],
-        status: Status.RESOLVED,
-      }));
+      setImages(pS => [...pS, ...data.hits]);
+      setStatus(Status.RESOLVED);
 
-      if (data.hits.length < 180) {
-        this.setState({ status: Status.LOADED });
+      if (data.hits.length < 12) {
+        setStatus(Status.LOADED);
         toast.info('Everything is loaded');
       }
     } catch (error) {
-      this.setState({ status: Status.REJECTED });
+      setStatus(Status.REJECTED);
       toast.error('oops :( Something wrong, try again');
     }
-  };
+  }
 
-  loadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
-  };
+  function loadMore() {
+    setPage(pS => pS + 1);
+  }
 
   /** render*/
-  render() {
-    const { images, status } = this.state;
-    console.log(status);
 
-    return (
-      <>
-        <Box py={0} as="section">
-          <Box m="0 auto" px={15} py={0}>
-            <ToastContainer />
-            <Title>Image Gallery</Title>
-            <SearchBar>
-              <SearchForm onClick={this.handleFormSubmit} />
-            </SearchBar>
+  return (
+    <>
+      <Box py={0} as="section">
+        <Box m="0 auto" px={15} py={0}>
+          <ToastContainer />
+          <Title>Image Gallery</Title>
+          <SearchBar>
+            <SearchForm onClick={handleFormSubmit} />
+          </SearchBar>
 
-            {status === Status.PENDING && (
-              // <Box position="fixed" top="50vh" left="50vw">
-              <Circles
-                height="150"
-                width="150"
-                color=" #3f51b5"
-                ariaLabel="circles-loading"
-                wrapperStyle={{
-                  position: 'fixed',
-                  bottom: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%,-50%)',
-                  zIndex: '100',
-                }}
-                visible={true}
-              />
-              // </Box>
-            )}
+          {status === Status.PENDING && (
+            // <Box position="fixed" top="50vh" left="50vw">
+            <Circles
+              height="150"
+              width="150"
+              color=" #3f51b5"
+              ariaLabel="circles-loading"
+              wrapperStyle={{
+                position: 'fixed',
+                bottom: '50%',
+                left: '50%',
+                transform: 'translate(-50%,-50%)',
+                zIndex: '100',
+              }}
+              visible={true}
+            />
+            // </Box>
+          )}
 
-            {images.length > 0 && (
-              <>
-                <ImageGallery images={images} />
-                <Box py="20px" display="flex" justifyContent="center">
-                  {status !== Status.LOADED && (
-                    <Button onClick={this.loadMore}>Load more</Button>
-                  )}
-                </Box>
-              </>
-            )}
-          </Box>
+          {images.length > 0 && (
+            <>
+              <ImageGallery images={images} />
+              <Box py="20px" display="flex" justifyContent="center">
+                {status !== Status.LOADED && (
+                  <Button onClick={loadMore}>Load more</Button>
+                )}
+              </Box>
+            </>
+          )}
         </Box>
-      </>
-    );
-  }
+      </Box>
+    </>
+  );
 }
