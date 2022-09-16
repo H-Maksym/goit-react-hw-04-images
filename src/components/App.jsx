@@ -77,7 +77,7 @@ export default function App() {
         behavior: 'smooth',
       });
     }
-  }, [page]);
+  }, [page,images]);
 
   /** event handler filter*/
   function handleFormSubmit(e) {
